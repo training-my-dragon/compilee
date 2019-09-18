@@ -1,7 +1,9 @@
+use crate::Token;
+
 grammar;
 
 pub Program: () = {
-    Statement,
+    Statement?,
 };
 
 Statement: () = {
@@ -9,14 +11,29 @@ Statement: () = {
 }
 
 VariableDeclaration: () = {
-  "int" Id,
-  "float" Id,
-  "string" Id,
-  "int" Id "[" "]",
-  "float" Id "[" "]",
-  "string" Id "[" "]",
+    "int" Id,
+    "float" Id,
+    "string" Id,
+    "int" Id "[" "]",
+    "float" Id "[" "]",
+    "string" Id "[" "]",
 }
 
 Id: () = {
-  r"\w+",
+    r"\w+",
+}
+
+extern {
+    type Location = usize;
+    type Error = crate::LexicalError;
+
+    enum Token {
+        ";" => Token::Semicolon,
+        "int" => Token::Int,
+        "float" => Token::Float,
+        "string" => Token::String,
+        "[" => Token::RBracket,
+        "]" => Token::LBracket,
+        r"\w+" => Token::Identifier,
+    }
 }
