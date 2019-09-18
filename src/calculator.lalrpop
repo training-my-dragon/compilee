@@ -1,33 +1,22 @@
-use std::str::FromStr;
-use crate::ast::{Expr, Opcode};
-
 grammar;
 
-pub Expr: Box<Expr> = {
-    Expr ExprOp Factor => Box::new(Expr::Op(<>)),
-    Factor,
+pub Program: () = {
+    Statement,
 };
 
-ExprOp: Opcode = {
-    "+" => Opcode::Add,
-    "-" => Opcode::Sub,
-};
+Statement: () = {
+    VariableDeclaration ";",
+}
 
-Factor: Box<Expr> = {
-    Factor FactorOp Term => Box::new(Expr::Op(<>)),
-    Term,
-};
+VariableDeclaration: () = {
+  "int" Id,
+  "float" Id,
+  "string" Id,
+  "int" Id "[" "]",
+  "float" Id "[" "]",
+  "string" Id "[" "]",
+}
 
-FactorOp: Opcode = {
-    "*" => Opcode::Mul,
-    "/" => Opcode::Div,
-};
-
-Term: Box<Expr> = {
-    Num => Box::new(Expr::Number(<>)),
-    "(" <Expr> ")"
-};
-
-Num: i32 = {
-    r"[0-9]+" => i32::from_str(<>).unwrap()
-};
+Id: () = {
+  r"\w+",
+}
