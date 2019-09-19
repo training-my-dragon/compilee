@@ -1,5 +1,3 @@
-use crate::Token;
-
 grammar;
 
 pub Program: () = {
@@ -8,32 +6,47 @@ pub Program: () = {
 
 Statement: () = {
     VariableDeclaration ";",
+    Assignment ";",
+    "{" StatementList "}",
+}
+
+StatementList: () = {
+    Statement StatementList?,
 }
 
 VariableDeclaration: () = {
-    "int" Id,
-    "float" Id,
-    "string" Id,
-    "int" Id "[" "]",
-    "float" Id "[" "]",
-    "string" Id "[" "]",
+    "int" Identifier ("[" IntConstant "]")*,
+    "float" Identifier ("[" IntConstant "]")*,
+    "string" Identifier ("[" IntConstant "]")*,
 }
 
-Id: () = {
-    r"\w+",
+Assignment: () = {
+    LValue "=" RValue,
 }
 
-extern {
-    type Location = usize;
-    type Error = crate::LexicalError;
+LValue: () = {
+    Identifier,
+}
 
-    enum Token {
-        ";" => Token::Semicolon,
-        "int" => Token::Int,
-        "float" => Token::Float,
-        "string" => Token::String,
-        "[" => Token::RBracket,
-        "]" => Token::LBracket,
-        r"\w+" => Token::Identifier,
-    }
+RValue: () = {
+    Identifier,
+    IntConstant,
+    FloatConstant,
+    StringConstant,
+}
+
+Identifier: () = {
+    r"[_[:alpha:]][_[:alnum:]]*",
+}
+
+IntConstant: () = {
+    r"[[:digit:]]+",
+}
+
+FloatConstant: () = {
+    r"[[:digit:]]+\.[[:digit:]]+",
+}
+
+StringConstant: () = {
+    r#""[[:alnum]]*""#
 }
