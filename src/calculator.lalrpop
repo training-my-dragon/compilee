@@ -1,33 +1,52 @@
-use std::str::FromStr;
-use crate::ast::{Expr, Opcode};
-
 grammar;
 
-pub Expr: Box<Expr> = {
-    Expr ExprOp Factor => Box::new(Expr::Op(<>)),
-    Factor,
+pub Program: () = {
+    Statement?,
 };
 
-ExprOp: Opcode = {
-    "+" => Opcode::Add,
-    "-" => Opcode::Sub,
-};
+Statement: () = {
+    VariableDeclaration ";",
+    Assignment ";",
+    "{" StatementList "}",
+}
 
-Factor: Box<Expr> = {
-    Factor FactorOp Term => Box::new(Expr::Op(<>)),
-    Term,
-};
+StatementList: () = {
+    Statement StatementList?,
+}
 
-FactorOp: Opcode = {
-    "*" => Opcode::Mul,
-    "/" => Opcode::Div,
-};
+VariableDeclaration: () = {
+    "int" Identifier ("[" IntConstant "]")*,
+    "float" Identifier ("[" IntConstant "]")*,
+    "string" Identifier ("[" IntConstant "]")*,
+}
 
-Term: Box<Expr> = {
-    Num => Box::new(Expr::Number(<>)),
-    "(" <Expr> ")"
-};
+Assignment: () = {
+    LValue "=" RValue,
+}
 
-Num: i32 = {
-    r"[0-9]+" => i32::from_str(<>).unwrap()
-};
+LValue: () = {
+    Identifier,
+}
+
+RValue: () = {
+    Identifier,
+    IntConstant,
+    FloatConstant,
+    StringConstant,
+}
+
+Identifier: () = {
+    r"[_[:alpha:]][_[:alnum:]]*",
+}
+
+IntConstant: () = {
+    r"[[:digit:]]+",
+}
+
+FloatConstant: () = {
+    r"[[:digit:]]+\.[[:digit:]]+",
+}
+
+StringConstant: () = {
+    r#""[[:alnum]]*""#
+}
