@@ -9,6 +9,18 @@ pub enum Token {
 }
 
 #[test]
-fn calculator() {
-    calculator::ProgramParser::new().parse("{ int __banana55; banana = 55; banana = 77; }").unwrap();
+fn calculator_test() {
+    calculator::ProgramParser::new().parse("{\
+            int __banana55;\
+            banana = 55;\
+            banana = 77;
+        }").unwrap();
+}
+
+#[test]
+fn string_regex_test() {
+    calculator::ProgramParser::new().parse("{\
+            string __lalala55;\
+            lalala = \"pud\"im\";
+        }").unwrap();
 }

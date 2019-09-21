@@ -48,5 +48,5 @@ FloatConstant: () = {
 }
 
 StringConstant: () = {
-    r#""[[:alnum]]*""#
+    r#""[[\\"][^"]]*""#
 }
