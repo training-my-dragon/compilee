@@ -1,0 +1,114 @@
+grammar;
+
+pub Program: () = {
+    Statement?,
+};
+
+Statement: () = {
+    VariableDeclaration ";",
+    Assignment ";",
+    PrintStatement ";",
+    ReadStatement ";",
+    ReturnStatement ";",
+    IfStatement ";",
+    ForStatement ";",
+    "{" StatementList "}",
+    ";",
+}
+
+VariableDeclaration: () = {
+    "int" Identifier ("[" IntConstant "]")*,
+    "float" Identifier ("[" IntConstant "]")*,
+    "string" Identifier ("[" IntConstant "]")*,
+}
+
+Assignment: () = {
+    LValue "=" RValue,
+}
+
+LValue: () = {
+    Identifier ("[" Expression "]")*,
+}
+
+RValue: () = {
+    Expression,
+    Allocation,
+}
+
+Expression: () = {
+    NumericalExpression,
+}
+
+NumericalExpression: () = {
+    Term "+" NumericalExpression,
+    Term "-" NumericalExpression,
+    Term,
+}
+
+Term: () = {
+    UnaryExpression "*" Term,
+    UnaryExpression "/" Term,
+    UnaryExpression "%" Term,
+    UnaryExpression,
+}
+
+UnaryExpression: () = {
+    "+" Factor,
+    "-" Factor,
+    Factor,
+}
+
+Factor: () = {
+    IntConstant,
+    FloatConstant,
+    StringConstant,
+    "null",
+    LValue,
+    "(" Expression ")",
+}
+
+Allocation: () = {
+    "new" "int" ("[" Expression "]")+,
+    "new" "float" ("[" Expression "]")+,
+    "new" "string" ("[" Expression "]")+,
+}
+
+PrintStatement: () = {
+    "print" Expression,
+}
+
+ReadStatement: () = {
+    "read" LValue,
+}
+
+ReturnStatement: () = {
+    "return",
+}
+
+IfStatement: () = {
+    "if" "(" Expression ")" Statement ("else" Statement)?,
+}
+
+ForStatement: () = {
+    "for" "(" Assignment ";" Expression ";" Assignment ")" Statement,
+}
+
+StatementList: () = {
+    Statement StatementList?,
+}
+
+Identifier: () = {
+    r"[_[:alpha:]][_[:alnum:]]*",
+}
+
+IntConstant: () = {
+    r"[[:digit:]]+",
+}
+
+FloatConstant: () = {
+    r"[[:digit:]]+\.[[:digit:]]+",
+}
+
+StringConstant: () = {
+    r#""[[:alnum]]*""#
+}
