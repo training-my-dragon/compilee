@@ -121,5 +121,5 @@ FloatConstant: () = {
 }
 
 StringConstant: () = {
-    r#""(([^\\"]|\\.)*)""# => println!("inicio da fera {} fim da string constante", <>.to_string()),
+    r#""(([^\\"]|\\.)*)""#,
 }
