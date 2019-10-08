@@ -10,10 +10,15 @@ Statement: () = {
     PrintStatement ";",
     ReadStatement ";",
     ReturnStatement ";",
-    IfStatement ";",
-    ForStatement ";",
-    "{" StatementList "}",
+    IfStatement,
+    ForStatement,
+    StatementBlock,
+    "break" ";",
     ";",
+}
+
+StatementBlock: () = {
+    "{" StatementList "}",
 }
 
 VariableDeclaration: () = {
@@ -36,6 +41,12 @@ RValue: () = {
 }
 
 Expression: () = {
+    NumericalExpression "<" NumericalExpression,
+    NumericalExpression "<=" NumericalExpression,
+    NumericalExpression ">" NumericalExpression,
+    NumericalExpression ">=" NumericalExpression,
+    NumericalExpression "==" NumericalExpression,
+    NumericalExpression "!=" NumericalExpression,
     NumericalExpression,
 }
 
@@ -86,11 +97,11 @@ ReturnStatement: () = {
 }
 
 IfStatement: () = {
-    "if" "(" Expression ")" Statement ("else" Statement)?,
+    "if" "(" Expression ")" StatementBlock ("else" StatementBlock)?,
 }
 
 ForStatement: () = {
-    "for" "(" Assignment ";" Expression ";" Assignment ")" Statement,
+    "for" "(" Assignment ";" Expression ";" Assignment ")" StatementBlock,
 }
 
 StatementList: () = {
@@ -110,5 +121,5 @@ FloatConstant: () = {
 }
 
 StringConstant: () = {
-    r#""[[:alnum]]*""#
+    r#""(([^\\"]|\\.)*)""# => println!("inicio da fera {} fim da string constante", <>.to_string()),
 }
