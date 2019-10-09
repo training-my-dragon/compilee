@@ -7,5 +7,4 @@ sources:
 tasks:
   - build-package: |
       cd compilee
-      make install
       make run
