@@ -1,0 +1,9 @@
+image: ubuntu/xenial
+packages:
+sources:
+  - https://github.com/training-my-dragon/compilee
+tasks:
+  - build-package: |
+      cd compilee
+      wget -O - https://static.rust-lang.org/rustup.sh | sh
+      cargo build
