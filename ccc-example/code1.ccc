@@ -1,0 +1,104 @@
+{
+    {
+        print "defining variables";
+        int i;
+        int j;
+        float x;
+        float max;
+        print "assigning some values";
+        x = 0;
+        max = 10000;
+        print "looooooop!";
+        for ( i = 0; i <= 1000; i = i + 1){
+            print i;
+            for ( i = 0; i <= 1000; i = i + 1){
+                print j;
+                x = x + 0.001;
+                if ( x == max ){
+                    print "x == max";
+                    break;
+                }
+            }
+        }
+        print "end of first section";
+    }
+    {
+        print "wow, I can play with arrays too!";
+        int ararararray;
+        int mah_pointer;
+        ararararray = new int[100];
+        for (mah_pointer = 0; mah_pointer < 100; mah_pointer = mah_pointer + 1){
+            ararararray[mah_pointer] = mah_pointer;
+        }
+        print "print tha array!!!";
+        for (mah_pointer = 0; mah_pointer < 100; mah_pointer = mah_pointer + 1){
+            print ararararray[mah_pointer];
+        }
+        print "array printed!";
+        print "end of second section";
+    }
+    {
+        print "EEEEEEEEH!";
+        int i;
+        for (i = 0; i < 10; i = i + 1){
+            print "C";
+            print "A";
+            print "F";
+            print "E";
+            print "H";
+            print "!";
+        }
+        print "EU QUERO CAFEH!!!";
+        print "end of tri... thri.. third section";
+    }
+    {
+        print "AAAARRAYS... AAAND COFFEEEEE!";
+        int i;
+        int array;
+        array = new int[4];
+        for (i = 0; i < 4; i = i + 1){
+            array[i] = i;
+        }
+        for (i = 0; i < 4; i = i + 1){
+            if (array[i] == 0){
+                print "C";
+            }
+            else {
+                print " ";
+            }
+            if (array[i] == 1){
+                print "A";
+            }
+            else {
+                print " ";
+            }
+            if (array[i] == 2){
+                print "F";
+            }
+            else {
+                print " ";
+            }
+            if (array[i] == 3){
+                print "E";
+            }
+            else {
+                print " ";
+            }
+        }
+        print "end of forth wall... eh... section!";
+    }
+    {
+        print "hmm, I shall zuar us nome dax variables";
+        int inconstanteDeRebosteio;
+        inconstanteDeRebosteio = 1;
+        if (inconstanteDeRebosteio == 1){
+            print "true da true";
+        }
+        else {
+            print "how... just... how did you do this?";
+        }
+        if (1 == 1){
+            print "now this is true";
+        }
+    }
+}

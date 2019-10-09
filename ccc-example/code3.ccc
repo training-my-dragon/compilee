@@ -1,0 +1,100 @@
+{
+    {
+        print "true random number generator";
+        print "a.k.a. matrix input hell";
+        int i;
+        int j;
+        int m1;
+        int m2;
+        int r;
+        m1 = new int[100][100];
+        m2 = new int[100][100];
+        r  = new int[100][100];
+        for (i = 0; i < 100; i = i + 1){
+            for (j = 0; j < 100; j = j + 1){
+                read m1[i][j];
+                print m1[i][j];
+                read m2[i][j];
+                print m2[i][j];
+            }
+        }
+        for (i = 0; i < 100; i = i + 1){
+            for (j = 0; j < 100; j = j + 1){
+                r[i][j] = m1[i][j] + m2[i][j];
+                print r[i][j];
+                read m2[i][j];
+                print m2[i][j];
+            }
+        }
+        for (i = 0; i < 100; i = i + 1){
+            for (j = 0; j < 100; j = j + 1){
+                r[i][j] = m1[i][j] + m2[i][j];
+                print r[i][j];
+                read m1[i][j];
+                print m1[i][j];
+            }
+        }
+        for (i = 0; i < 100; i = i + 1){
+            for (j = 0; j < 100; j = j + 1){
+                r[i][j] = m1[i][j] + m2[i][j];
+                print r[i][j];
+            }
+        }
+    }
+    {
+        print "true random number generator";
+        print "a.k.a. matrix input hell";
+        int i;
+        int j;
+        int m1;
+        int m2;
+        int r;
+        m1 = new int[100][100];
+        m2 = new int[100][100];
+        r  = new int[100][100];
+        for (i = 0; i < 100; i = i + 1){
+            for (j = 0; j < 100; j = j + 1){
+                read m1[i][j];
+                print m1[i][j];
+                read m2[i][j];
+                print m2[i][j];
+                r[i][j] = m1[i][j] + m2[i][j];
+                print r[i][j];
+                if (r[i][j] > 100000){
+                    print "out of bounds";
+                    break;
+                }
+                else {
+                    print "...";
+                }
+            }
+        }
+    }
+    {
+        print "part 2";
+        int i;
+        int input;
+        int array;
+        read input;
+        array = new int[4];
+        for (i = 0; i < 4; i = i + 1){
+            array[i] = input;
+            print input;
+        }
+        for (i = 0; i < 4; i = i + 1){
+            if (array[i] == 0){
+                print "break";
+                break;
+            }
+        }
+        print "exited loop";
+        print "testing not equal";
+        if (input != 0){
+            print "input not equal zero";
+        }
+        else {
+            print "input equal zero";
+        }
+        return;
+    }
+}

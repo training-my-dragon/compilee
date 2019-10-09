@@ -1,11 +1,10 @@
 image: ubuntu/lts
 packages:
   - curl
+  - build-essential
 sources:
   - https://github.com/training-my-dragon/compilee
 tasks:
   - build-package: |
       cd compilee
-      curl https://sh.rustup.rs -sSf | sh -s -- -y
-      source "${HOME}/.cargo/env"
-      cargo build
+      make run

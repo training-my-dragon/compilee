@@ -1,0 +1,103 @@
+{
+    {
+        print "FAAAALA GALERINHA DO CCC!";
+        int i;
+        float bla;
+        float yay;
+        read bla;
+        yay = 0;
+        for ( i = 0; i < 10; i = i + 1){
+            print i;
+            if (bla > yay){
+                yay = yay + 0.01;
+                print "bla > yay";
+            }
+            else {
+                print "bla isn't > yay";
+            }
+        }
+        print "BIIIIRRRRLLL!";
+        print "function end yay!";
+    }
+    {
+        print "Esse bolo simples é uma daquelas receitas básicas ";
+        print "e deliciosas: ele pode ser incrementado com calda ";
+        print "de chocolate, recheio de brigadeiro, doce de leite ";
+        print "e outras delícias.";
+        print "No TudoGostoso, você encontra muitas receitas de ";
+        print "bolo incríveis, como bolo de milho verde da espiga, ";
+        print "bolo de aipim, bolo fofo de chocolate e diversas outras.";
+    }
+    {
+        int fogao_nao_explodiu;
+        fogao_nao_explodiu = 1;
+        print "2 xícaras (cha) de açúcar";
+        print "3 xícaras (chá) de farinha de trigo";
+        print "4 colheres (sopa) de margarina";
+        print "3 ovos";
+        print "1 e 1/2 xicara (cha) de leite";
+        print "1 colher (sopa) bem cheia de fermento em po";
+        if (fogao_nao_explodiu == 1) {
+            print "Bata as claras em neve e reserve.";
+            print "Misture as gemas, a margarina e o ";
+            print "açúcar até obter uma massa homogênea.";
+            print "Acrescente o leite e a farinha de trigo ";
+            print "aos poucos, sem parar de bater.";
+            print "Por último, adicione as claras em neve e o fermento.";
+            print "Despeje a massa em uma forma grande ";
+            print "de furo central untada e enfarinhada.";
+            print "Asse em forno médio 180 °C, ";
+            print "preaquecido, por aproximadamente 40 minutos ";
+            print "ou ao furar o bolo com um garfo, este saia limpo.";
+        }
+        print "Veja também:";
+        print "Recheios para bolos de chocolate: confira 4 receitas";
+        print "Brigadeiro cremoso para recheio: como fazer";
+    }
+    {
+        int _snake_;
+        _snake_ = 42;
+        int input;
+        read input;
+        for (_snake_ = 42; _snake_ > 0; _snake_ = _snake_ - 1){
+            print input;
+            print _snake_;
+            if (input == 0){
+                print "broken";
+                break;
+            }
+        }
+        print "something something exited loop";
+    }
+    {
+        print "NOBODY EXPECTS THE SPANISH INQUISITION!";
+        int spanish;
+        int inquisition;
+        read spanish;
+        read inquisition;
+        inquisition = inquisition * 30;
+        spanish = spanish - inquisition;
+        print spanish;
+        print inquisition;
+        return;
+    }
+    {
+        print "cha";
+        print "la";
+        print "head";
+        print "chala";
+        print "nao importa o que aconteca";
+        print "sempre";
+        print "tenho a forca";
+        print "e o poder";
+        
+        int chala;
+        read chala;
+        if (chala > 0){
+            print "tenho a forca e o poder";
+        }
+        else {
+            print "tenho a forca e o poder";
+        }
+    }
+}
