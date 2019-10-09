@@ -13,12 +13,16 @@ fn main() {
 
     for arg in args {
 
-        let mut file = File::open(arg).expect("failed to open file.");
+        let mut file = File::open(&arg).expect("failed to open file.");
 
         let mut file_string = String::new();
 
         file.read_to_string(&mut file_string).unwrap();
 
-        parser::ProgramParser::new().parse(&file_string).unwrap();
+        match parser::ProgramParser::new().parse(&file_string) {
+            Ok(_) => println!("Finish parsing file {}", arg),
+            Err(error) => println!("Parsing erro: {:#?}", error),
+        }
+
     }
 }
