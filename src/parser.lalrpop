@@ -1,24 +1,32 @@
+use std::option::Option;
+use crate::ast::Statement;
+
 grammar;
 
-pub Program: () = {
-    Statement?,
+pub Program: Option<Statement> = {
+    () => None,
+    <s:Statement> => Some(s),
 };
 
-Statement: () = {
-    VariableDeclaration ";",
-    Assignment ";",
-    PrintStatement ";",
-    ReadStatement ";",
-    ReturnStatement ";",
-    IfStatement,
-    ForStatement,
-    StatementBlock,
-    "break" ";",
-    ";",
+Statement: Statement = {
+    VariableDeclaration ";" => Statement::Declaration,
+    Assignment ";" => Statement::Assing,
+    PrintStatement ";" => Statement::Print,
+    ReadStatement ";" => Statement::Read,
+    <s: ReturnStatement> ";" => s,
+    IfStatement => Statement::If,
+    ForStatement => Statement::For,
+    StatementBlock => Statement::Block(vec![]),
+    "break" ";" => Statement::Break,
+    ";" => Statement::Empty,
 }
 
 StatementBlock: () = {
     "{" StatementList "}",
+}
+
+StatementList: () = {
+    Statement StatementList?,
 }
 
 VariableDeclaration: () = {
@@ -92,20 +100,18 @@ ReadStatement: () = {
     "read" LValue,
 }
 
-ReturnStatement: () = {
-    "return",
+ReturnStatement: Statement = {
+    "return" => Statement::Return,
 }
 
 IfStatement: () = {
-    "if" "(" Expression ")" StatementBlock ("else" StatementBlock)?,
+    "if" "(" Expression ")" StatementBlock,
+    "if" "(" Expression ")" StatementBlock "else" IfStatement,
+    "if" "(" Expression ")" StatementBlock "else" StatementBlock,
 }
 
 ForStatement: () = {
     "for" "(" Assignment ";" Expression ";" Assignment ")" StatementBlock,
-}
-
-StatementList: () = {
-    Statement StatementList?,
 }
 
 Identifier: () = {
