@@ -1,17 +1,62 @@
 // use std::fmt::{Debug, Error, Formatter};
 
+pub enum Type {
+    Int,
+    Float,
+    String,
+
+    Array(Box<Type>, isize),
+}
+
 pub enum Statement {
     Declaration,
-    Assing,
+    Assing(LValue, RValue),
     Print,
     Read,
     Return,
     If,
     For,
-    Block(Vec<Box<Statement>>),
+    Block(Vec<Statement>),
     Break,
     Empty,
     Error,
+}
+
+pub enum RValue {
+    Expr(Expr),
+    Alloc,
+}
+
+pub enum LValue {
+    Id(String),
+    Access(Box<LValue>, Box<Expr>),
+}
+
+pub enum Expr {
+    BinaryOp(Box<Expr>, OpCode, Box<Expr>),
+    UnaryOp(OpCode, Box<Expr>),
+
+    NamedLeaf(LValue),
+
+    IntConstant(i64),
+    FloatConstant(f64),
+    StringConstant(String),
+    NullConstant,
+}
+
+pub enum OpCode {
+    LessThan,
+    LessThanEq,
+    GreaterThan,
+    GreaterThanEq,
+    Equal,
+    NotEqual,
+    Mul,
+    Div,
+    Add,
+    Sub,
+    Mod,
+    UnaryMinus,
 }
 
 // impl Debug for Expr {

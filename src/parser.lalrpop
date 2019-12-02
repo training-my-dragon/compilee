@@ -1,5 +1,9 @@
 use std::option::Option;
 use crate::ast::Statement;
+use crate::ast::Expr;
+use crate::ast::OpCode;
+use crate::ast::LValue;
+use crate::ast::RValue;
 
 grammar;
 
@@ -9,24 +13,20 @@ pub Program: Option<Statement> = {
 };
 
 Statement: Statement = {
-    VariableDeclaration ";" => Statement::Declaration,
-    Assignment ";" => Statement::Assing,
-    PrintStatement ";" => Statement::Print,
-    ReadStatement ";" => Statement::Read,
+    <s: VariableDeclaration> ";" => Statement::Declaration,
+    <s: Assignment> ";" => s,
+    <s: PrintStatement> ";" => Statement::Print,
+    <s: ReadStatement> ";" => Statement::Read,
     <s: ReturnStatement> ";" => s,
     IfStatement => Statement::If,
     ForStatement => Statement::For,
-    StatementBlock => Statement::Block(vec![]),
+    StatementBlock,
     "break" ";" => Statement::Break,
     ";" => Statement::Empty,
 }
 
-StatementBlock: () = {
-    "{" StatementList "}",
-}
-
-StatementList: () = {
-    Statement StatementList?,
+StatementBlock: Statement = {
+    "{" <statement_list: Statement*> "}" => Statement::Block(statement_list),
 }
 
 VariableDeclaration: () = {
@@ -35,61 +35,140 @@ VariableDeclaration: () = {
     "string" Identifier ("[" IntConstant "]")*,
 }
 
-Assignment: () = {
-    LValue "=" RValue,
+Assignment: Statement = {
+    <left: LValue> "=" <right: RValue> => Statement::Assing(left, right),
 }
 
-LValue: () = {
-    Identifier ("[" Expression "]")*,
+LValue: LValue = {
+    <id: Identifier> <mut access_list: ("[" Expression "]")*> => {
+        let mut lvalue = LValue::Id(id);
+
+        while let Some((_, expr, _)) = access_list.pop() {
+            lvalue = LValue::Access(Box::new(lvalue), Box::new(expr));
+        }
+
+        lvalue
+    },
 }
 
-RValue: () = {
-    Expression,
-    Allocation,
+RValue: RValue = {
+    Expression => RValue::Expr(<>),
+    Allocation => RValue::Alloc,
 }
 
-Expression: () = {
-    NumericalExpression "<" NumericalExpression,
-    NumericalExpression "<=" NumericalExpression,
-    NumericalExpression ">" NumericalExpression,
-    NumericalExpression ">=" NumericalExpression,
-    NumericalExpression "==" NumericalExpression,
-    NumericalExpression "!=" NumericalExpression,
+Expression: Expr = {
+    <left: NumericalExpression> "<" <right: NumericalExpression> => {
+        Expr::BinaryOp(
+            Box::new(left),
+            OpCode::LessThan,
+            Box::new(right),
+        )
+    },
+    <left: NumericalExpression> "<=" <right: NumericalExpression> => {
+        Expr::BinaryOp(
+            Box::new(left),
+            OpCode::LessThanEq,
+            Box::new(right),
+        )
+    },
+    <left: NumericalExpression> ">"  <right: NumericalExpression> => {
+        Expr::BinaryOp(
+            Box::new(left),
+            OpCode::GreaterThan,
+            Box::new(right),
+        )
+    },
+    <left: NumericalExpression> ">=" <right: NumericalExpression> => {
+        Expr::BinaryOp(
+            Box::new(left),
+            OpCode::GreaterThanEq,
+            Box::new(right),
+        )
+    },
+    <left: NumericalExpression> "==" <right: NumericalExpression> => {
+        Expr::BinaryOp(
+            Box::new(left),
+            OpCode::Equal,
+            Box::new(right),
+        )
+    },
+    <left: NumericalExpression> "!=" <right: NumericalExpression> => {
+        Expr::BinaryOp(
+            Box::new(left),
+            OpCode::NotEqual,
+            Box::new(right),
+        )
+    },
     NumericalExpression,
 }
 
-NumericalExpression: () = {
-    Term "+" NumericalExpression,
-    Term "-" NumericalExpression,
+NumericalExpression: Expr = {
+    <left: Term> "+" <right: NumericalExpression> => {
+        Expr::BinaryOp(
+            Box::new(left),
+            OpCode::Add,
+            Box::new(right),
+        )
+    },
+    <left: Term> "-" <right: NumericalExpression> => {
+        Expr::BinaryOp(
+            Box::new(left),
+            OpCode::Sub,
+            Box::new(right),
+        )
+    },
     Term,
 }
 
-Term: () = {
-    UnaryExpression "*" Term,
-    UnaryExpression "/" Term,
-    UnaryExpression "%" Term,
+Term: Expr = {
+    <left: UnaryExpression> "*" <right: Term> => {
+        Expr::BinaryOp(
+            Box::new(left),
+            OpCode::Mul,
+            Box::new(right),
+        )
+    },
+    <left: UnaryExpression> "/" <right: Term> => {
+        Expr::BinaryOp(
+            Box::new(left),
+            OpCode::Div,
+            Box::new(right),
+        )
+    },
+    <left: UnaryExpression> "%" <right: Term> => {
+        Expr::BinaryOp(
+            Box::new(left),
+            OpCode::Mod,
+            Box::new(right),
+        )
+    },
     UnaryExpression,
 }
 
-UnaryExpression: () = {
-    "+" Factor,
-    "-" Factor,
+UnaryExpression: Expr = {
+    "+" <e: Factor> => e,
+    "-" <e: Factor> => {
+        Expr::UnaryOp(
+            OpCode::UnaryMinus,
+            Box::new(e),
+        )
+    },
     Factor,
 }
 
-Factor: () = {
+Factor: Expr = {
     IntConstant,
     FloatConstant,
     StringConstant,
-    "null",
-    LValue,
-    "(" Expression ")",
+    "null" => Expr::NullConstant,
+    LValue => Expr::NamedLeaf(<>),
+    "(" <e: NumericalExpression> ")" => e,
 }
 
 Allocation: () = {
-    "new" "int" ("[" Expression "]")+,
-    "new" "float" ("[" Expression "]")+,
-    "new" "string" ("[" Expression "]")+,
+    "new" "int" ("[" NumericalExpression "]")+,
+    "new" "float" ("[" NumericalExpression "]")+,
+    "new" "string" ("[" NumericalExpression "]")+,
 }
 
 PrintStatement: () = {
@@ -114,18 +193,18 @@ ForStatement: () = {
     "for" "(" Assignment ";" Expression ";" Assignment ")" StatementBlock,
 }
 
-Identifier: () = {
-    r"[_[:alpha:]][_[:alnum:]]*",
+Identifier: String = {
+    r"[_[:alpha:]][_[:alnum:]]*" => <>.to_string(),
 }
 
-IntConstant: () = {
-    r"[[:digit:]]+",
+IntConstant: Expr = {
+    r"[[:digit:]]+" => Expr::IntConstant(<>.parse().unwrap()),
 }
 
-FloatConstant: () = {
-    r"[[:digit:]]+\.[[:digit:]]+",
+FloatConstant: Expr = {
+    r"[[:digit:]]+\.[[:digit:]]+" => Expr::FloatConstant(<>.parse().unwrap()),
 }
 
-StringConstant: () = {
-    r#""(([^\\"]|\\.)*)""#,
+StringConstant: Expr = {
+    r#""(([^\\"]|\\.)*)""# => Expr::StringConstant(<>.to_string()),
 }
