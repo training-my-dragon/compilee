@@ -20,7 +20,12 @@ fn main() {
         file.read_to_string(&mut file_string).unwrap();
 
         match parser::ProgramParser::new().parse(&file_string) {
-            Ok(_) => println!("Finish parsing file {}", arg),
+            Ok(statement) => {
+                println!("Finish parsing file {}", arg);
+
+                // println!("{:#?}", statement.unwrap());
+                println!("{}", statement.unwrap());
+            },
             Err(error) => println!("Parsing erro: {:#?}", error),
         }
 

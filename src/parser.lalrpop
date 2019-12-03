@@ -36,7 +36,7 @@ VariableDeclaration: () = {
 }
 
 Assignment: Statement = {
-    <left: LValue> "=" <right: RValue> => Statement::Assing(left, right),
+    <left: LValue> "=" <right: RValue> => Statement::Assign(left, right),
 }
 
 LValue: LValue = {

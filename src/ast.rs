@@ -1,5 +1,6 @@
-// use std::fmt::{Debug, Error, Formatter};
+use std::fmt;
 
+#[derive(Debug)]
 pub enum Type {
     Int,
     Float,
@@ -8,9 +9,10 @@ pub enum Type {
     Array(Box<Type>, isize),
 }
 
+#[derive(Debug)]
 pub enum Statement {
     Declaration,
-    Assing(LValue, RValue),
+    Assign(LValue, RValue),
     Print,
     Read,
     Return,
@@ -22,16 +24,19 @@ pub enum Statement {
     Error,
 }
 
+#[derive(Debug)]
 pub enum RValue {
     Expr(Expr),
     Alloc,
 }
 
+#[derive(Debug)]
 pub enum LValue {
     Id(String),
     Access(Box<LValue>, Box<Expr>),
 }
 
+#[derive(Debug)]
 pub enum Expr {
     BinaryOp(Box<Expr>, OpCode, Box<Expr>),
     UnaryOp(OpCode, Box<Expr>),
@@ -44,6 +49,7 @@ pub enum Expr {
     NullConstant,
 }
 
+#[derive(Debug)]
 pub enum OpCode {
     LessThan,
     LessThanEq,
@@ -59,25 +65,60 @@ pub enum OpCode {
     UnaryMinus,
 }
 
-// impl Debug for Expr {
-//     fn fmt(&self, fmt: &mut Formatter) -> Result<(), Error> {
-//         use self::Expr::*;
-//         match *self {
-//             Number(n) => write!(fmt, "{:?}", n),
-//             Op(ref l, op, ref r) => write!(fmt, "({:?} {:?} {:?})", l, op, r),
-//             Error => write!(fmt, "error"),
-//         }
-//     }
-// }
-//
-// impl Debug for Opcode {
-//     fn fmt(&self, fmt: &mut Formatter) -> Result<(), Error> {
-//         use self::Opcode::*;
-//         match *self {
-//             Mul => write!(fmt, "*"),
-//             Div => write!(fmt, "/"),
-//             Add => write!(fmt, "+"),
-//             Sub => write!(fmt, "-"),
-//         }
-//     }
-// }
+impl fmt::Display for Statement {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use self::Statement::*;
+        match self {
+            Block(statement_list) => {
+                for statement in statement_list {
+                    match write!(f, "{}", statement) {
+                        Ok(_) => (),
+                        Err(_) => (),
+                    }
+                }
+                Ok(())
+            }
+            Assign(lvalue, rvalue) => {
+                match lvalue {
+                    _ => write!(f, "LValue = "),
+                }.unwrap();
+
+                match rvalue {
+                    self::RValue::Expr(expr) => writeln!(f, "{}", expr),
+                    _ => writeln!(f, "RValue"),
+                }
+            }
+            _ => writeln!(f, "statement"),
+        }
+    }
+}
+
+impl fmt::Display for Expr {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use self::Expr::*;
+
+        match self {
+            BinaryOp(ref left, op , ref right) => {
+                write!(f, "{} {} {}", left, op, right)
+            },
+            IntConstant(i) => write!(f, "{}", i),
+            _ => write!(f, "expr"),
+        }
+    }
+}
+
+impl fmt::Display for OpCode {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use self::OpCode::*;
+
+        match *self {
+            Mul => write!(f, "mul"),
+            Div => write!(f, "div"),
+            Add => write!(f, "add"),
+            Sub => write!(f, "sub"),
+            Mod => write!(f, "mod"),
+            _ => Ok(()),
+        }
+    }
+}
+
