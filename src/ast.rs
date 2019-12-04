@@ -1,12 +1,39 @@
 use std::fmt;
 
 #[derive(Debug)]
-pub enum Type {
-    Int,
-    Float,
-    String,
+pub struct Program {
+    pub statement_list: Vec<Statement>,
+}
 
-    Array(Box<Type>, isize),
+impl fmt::Display for Program {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        for statement in &self.statement_list {
+            match write!(f, "{}", statement) {
+                Ok(()) => (),
+                Err(x) => return Err(x),
+            }
+        }
+
+        Ok(())
+    }
+}
+
+impl Program {
+    pub fn new(statement_list: Vec<Statement>) -> Self {
+        Program { statement_list: statement_list }
+    }
+
+    pub fn print_expression_tree(&self) {
+        for statement in &self.statement_list {
+            use self::Statement::*;
+            match statement {
+                Assign(lvalue, rvalue) => {
+
+                },
+                _ => (),
+            };
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -65,6 +92,82 @@ pub enum OpCode {
     UnaryMinus,
 }
 
+impl Statement {
+    pub fn generate_three_adress_code(&self) -> String {
+        use self::Statement::*;
+
+        match self {
+            Assign(l, r) => {
+                let (l_value_name, l_code) = l.generate_three_adress_code();
+                let (r_value_name, r_code) = r.generate_three_adress_code();
+
+                format!("{}{}{} = {}\n", l_code, r_code, l_value_name, r_value_name)
+            }
+            _ => String::new(),
+        }
+    }
+}
+
+impl LValue {
+    pub fn generate_three_adress_code(&self) -> (String, String) {
+        use self::LValue::*;
+
+        match self {
+            Id(name) => {
+                (name.clone(), "".to_owned())
+            },
+            Access(lvalue, expr) => {
+                let (l_value_name, l_code) = lvalue.generate_three_adress_code();
+                let (e_value_name, e_code) = expr.generate_three_adress_code();
+
+                let temp = "temp";
+                (temp.to_owned(), format!("{}{}{} = {}[{}]\n",l_code, e_code, temp, l_value_name, e_value_name))
+            },
+        }
+    }
+}
+
+impl RValue {
+    pub fn generate_three_adress_code(&self) -> (String, String) {
+        use self::RValue::*;
+
+        match self {
+            Expr(expr) => {
+                expr.generate_three_adress_code()
+            },
+            _ => (String::new(), String::new()),
+        }
+    }
+}
+
+impl Expr {
+    pub fn generate_three_adress_code(&self) -> (String, String) {
+        use self::Expr::*;
+
+        match self {
+            BinaryOp(l, op, r) => {
+                let (l_value_name, l_code) = l.generate_three_adress_code();
+                let (r_value_name, r_code) = r.generate_three_adress_code();
+
+                let temp = "temp";
+                (temp.to_owned(), format!("{}{}{} = {} {} {}\n", l_code, r_code, temp, l_value_name, op, r_value_name))
+            },
+            UnaryOp(op, r) => {
+                let (r_value_name, r_code) = r.generate_three_adress_code();
+
+                let temp = "temp";
+                (temp.to_owned(), format!("{}{} = {} {} {}\n", r_code, temp, -1, op, r_value_name))
+            },
+            NamedLeaf(lvalue) => {
+                lvalue.generate_three_adress_code()
+            },
+            IntConstant(int) => (int.to_string(), String::new()),
+            FloatConstant(float) => (float.to_string(), String::new()),
+            _ => (String::new(), String::new()),
+        }
+    }
+}
+
 impl fmt::Display for Statement {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use self::Statement::*;
@@ -78,15 +181,10 @@ impl fmt::Display for Statement {
                 }
                 Ok(())
             }
-            Assign(lvalue, rvalue) => {
-                match lvalue {
-                    _ => write!(f, "LValue = "),
-                }.unwrap();
+            Assign(_lvalue, _rvalue) => {
+                let code = self::Statement::generate_three_adress_code(&self);
 
-                match rvalue {
-                    self::RValue::Expr(expr) => writeln!(f, "{}", expr),
-                    _ => writeln!(f, "RValue"),
-                }
+                write!(f, "{}", code)
             }
             _ => writeln!(f, "statement"),
         }
@@ -112,12 +210,19 @@ impl fmt::Display for OpCode {
         use self::OpCode::*;
 
         match *self {
+            LessThan => write!(f, "<"),
+            LessThanEq => write!(f, "<="),
+            GreaterThan => write!(f, ">"),
+            GreaterThanEq => write!(f, ">="),
+
+            Equal => write!(f, "mul"),
+            NotEqual => write!(f, "mul"),
             Mul => write!(f, "mul"),
             Div => write!(f, "div"),
             Add => write!(f, "add"),
             Sub => write!(f, "sub"),
             Mod => write!(f, "mod"),
-            _ => Ok(()),
+            UnaryMinus => write!(f, "mul"),
         }
     }
 }

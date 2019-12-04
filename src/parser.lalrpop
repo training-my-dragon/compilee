@@ -1,4 +1,4 @@
-use std::option::Option;
+use crate::ast::Program;
 use crate::ast::Statement;
 use crate::ast::Expr;
 use crate::ast::OpCode;
@@ -7,12 +7,12 @@ use crate::ast::RValue;
 
 grammar;
 
-pub Program: Option<Statement> = {
-    () => None,
-    <s:Statement> => Some(s),
+pub Program: Program = {
+    <s: Statement*> =>  Program::new(s),
 };
 
 Statement: Statement = {
+    FunctionDefinition => Statement::Empty,
     <s: VariableDeclaration> ";" => Statement::Declaration,
     <s: Assignment> ";" => s,
     <s: PrintStatement> ";" => Statement::Print,
@@ -25,14 +25,26 @@ Statement: Statement = {
     ";" => Statement::Empty,
 }
 
+Type: () = {
+    "int",
+    "float",
+    "string",
+}
+
+FunctionDefinition: () = {
+    "def" Identifier "(" (FunctionParameter ",")* ")" StatementBlock,
+}
+
+FunctionParameter: () = {
+    Type Identifier,
+}
+
 StatementBlock: Statement = {
     "{" <statement_list: Statement*> "}" => Statement::Block(statement_list),
 }
 
 VariableDeclaration: () = {
-    "int" Identifier ("[" IntConstant "]")*,
-    "float" Identifier ("[" IntConstant "]")*,
-    "string" Identifier ("[" IntConstant "]")*,
+    Type Identifier ("[" IntConstant "]")*,
 }
 
 Assignment: Statement = {
@@ -40,7 +52,7 @@ Assignment: Statement = {
 }
 
 LValue: LValue = {
-    <id: Identifier> <mut access_list: ("[" Expression "]")*> => {
+    <id: Identifier> <mut access_list: ("[" NumericalExpression "]")*> => {
         let mut lvalue = LValue::Id(id);
 
         while let Some((_, expr, _)) = access_list.pop() {
@@ -52,52 +64,22 @@ LValue: LValue = {
 }
 
 RValue: RValue = {
-    Expression => RValue::Expr(<>),
+    NumericalExpression => RValue::Expr(<>),
     Allocation => RValue::Alloc,
 }
 
-Expression: Expr = {
-    <left: NumericalExpression> "<" <right: NumericalExpression> => {
-        Expr::BinaryOp(
-            Box::new(left),
-            OpCode::LessThan,
-            Box::new(right),
-        )
-    },
-    <left: NumericalExpression> "<=" <right: NumericalExpression> => {
-        Expr::BinaryOp(
-            Box::new(left),
-            OpCode::LessThanEq,
-            Box::new(right),
-        )
-    },
-    <left: NumericalExpression> ">"  <right: NumericalExpression> => {
-        Expr::BinaryOp(
-            Box::new(left),
-            OpCode::GreaterThan,
-            Box::new(right),
-        )
-    },
-    <left: NumericalExpression> ">=" <right: NumericalExpression> => {
-        Expr::BinaryOp(
-            Box::new(left),
-            OpCode::GreaterThanEq,
-            Box::new(right),
-        )
-    },
-    <left: NumericalExpression> "==" <right: NumericalExpression> => {
-        Expr::BinaryOp(
-            Box::new(left),
-            OpCode::Equal,
-            Box::new(right),
-        )
-    },
-    <left: NumericalExpression> "!=" <right: NumericalExpression> => {
-        Expr::BinaryOp(
-            Box::new(left),
-            OpCode::NotEqual,
-            Box::new(right),
-        )
+CompareOp: OpCode = {
+    "<" => OpCode::LessThan,
+    "<=" => OpCode::LessThanEq,
+    ">" => OpCode::GreaterThan,
+    ">=" => OpCode::GreaterThanEq,
+    "==" => OpCode::Equal,
+    "!=" => OpCode::NotEqual,
+}
+
+BoolExpression: Expr = {
+    <left: NumericalExpression> <op: CompareOp> <right: NumericalExpression> => {
+        Expr::BinaryOp(Box::new(left), op, Box::new(right))
     },
     NumericalExpression,
 }
@@ -166,13 +148,11 @@ Factor: Expr = {
 }
 
 Allocation: () = {
-    "new" "int" ("[" NumericalExpression "]")+,
-    "new" "float" ("[" NumericalExpression "]")+,
-    "new" "string" ("[" NumericalExpression "]")+,
+    "new" Type ("[" NumericalExpression "]")+,
 }
 
 PrintStatement: () = {
-    "print" Expression,
+    "print" NumericalExpression,
 }
 
 ReadStatement: () = {
@@ -184,13 +164,13 @@ ReturnStatement: Statement = {
 }
 
 IfStatement: () = {
-    "if" "(" Expression ")" StatementBlock,
-    "if" "(" Expression ")" StatementBlock "else" IfStatement,
-    "if" "(" Expression ")" StatementBlock "else" StatementBlock,
+    "if" "(" BoolExpression ")" StatementBlock,
+    "if" "(" BoolExpression ")" StatementBlock "else" IfStatement,
+    "if" "(" BoolExpression ")" StatementBlock "else" StatementBlock,
 }
 
 ForStatement: () = {
-    "for" "(" Assignment ";" Expression ";" Assignment ")" StatementBlock,
+    "for" "(" Assignment ";" BoolExpression ";" Assignment ")" StatementBlock,
 }
 
 Identifier: String = {
