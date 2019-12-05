@@ -61,7 +61,7 @@ FunctionParameter: () = {
 }
 
 StatementBlock: Statement = {
-    "{" <statement_list: Statement*> "}" => Statement::Block(statement_list),
+    "{" <statement_list: Statement*> "}" => Statement::Block(statement_list, SymbolTable::new(BTreeMap::new(), None)),
 }
 
 Assignment: Statement = {

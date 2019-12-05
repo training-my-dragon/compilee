@@ -1,10 +1,10 @@
 use std::collections::BTreeMap;
 use std::fmt;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Symbol(Type);
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct SymbolTable {
     pub dictionary: BTreeMap<String, Symbol>,
     pub father: Option<Box<SymbolTable>>,
@@ -54,6 +54,10 @@ impl Program {
 
     pub fn print_symbol_table(&self) {
         println!("{:#?}", self.symbol_table);
+
+        for statement in &self.statement_list {
+            statement.print_symbol_table();
+        }
     }
 }
 
@@ -77,7 +81,7 @@ pub enum Statement {
     Return,
     If,
     For,
-    Block(Vec<Statement>),
+    Block(Vec<Statement>, SymbolTable),
     Break,
     Empty,
     Error,
@@ -92,7 +96,7 @@ impl Statement {
                 lvalue.print_expression_tree();
                 rvalue.print_expression_tree();
             }
-            Block(statement_list) => {
+            Block(statement_list, _) => {
                 for statement in statement_list {
                     statement.print_expression_tree();
                 }
@@ -108,6 +112,28 @@ impl Statement {
             Declaration{id, decl_type} => {
                 father.dictionary.insert(id.clone(), Symbol(decl_type.clone()));
             },
+            Block(statement_list, symbol_table) => {
+                symbol_table.father = Some(Box::new(father.clone()));
+
+                for statement in statement_list {
+                    statement.populate_symbol_table(symbol_table);
+                }
+            }
+            _ => (),
+        }
+    }
+
+    pub fn print_symbol_table(&self) {
+        use self::Statement::*;
+
+        match self {
+            Block(statement_list, symbol_table) => {
+                println!("{:#?}", symbol_table);
+
+                for statement in statement_list {
+                    statement.print_symbol_table();
+                }
+            }
             _ => (),
         }
     }
@@ -265,7 +291,7 @@ impl fmt::Display for Statement {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use self::Statement::*;
         match self {
-            Block(statement_list) => {
+            Block(statement_list, _) => {
                 for statement in statement_list {
                     match write!(f, "{}", statement) {
                         Ok(_) => (),

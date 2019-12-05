@@ -28,6 +28,7 @@ fn main() {
 
                 program.populate_symbol_table();
 
+                println!("Symbol Tables for each context of {}", arg);
                 program.print_symbol_table();
             },
             Err(error) => println!("Parsing erro: {:#?}", error),
