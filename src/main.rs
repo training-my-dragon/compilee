@@ -20,11 +20,15 @@ fn main() {
         file.read_to_string(&mut file_string).unwrap();
 
         match parser::ProgramParser::new().parse(&file_string) {
-            Ok(program) => {
+            Ok(mut program) => {
                 println!("Finish parsing file {}", arg);
 
-                println!("{:#?}", &program);
-                println!("{}", program);
+                println!("Abstract Syntax Trees for Expressions of {}", arg);
+                program.print_expression_tree();
+
+                program.populate_symbol_table();
+
+                program.print_symbol_table();
             },
             Err(error) => println!("Parsing erro: {:#?}", error),
         }

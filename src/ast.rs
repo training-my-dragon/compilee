@@ -1,8 +1,25 @@
+use std::collections::BTreeMap;
 use std::fmt;
+
+#[derive(Debug)]
+pub struct Symbol(Type);
+
+#[derive(Debug)]
+pub struct SymbolTable {
+    pub dictionary: BTreeMap<String, Symbol>,
+    pub father: Option<Box<SymbolTable>>,
+}
+
+impl SymbolTable {
+    pub fn new(dictionary: BTreeMap<String, Symbol>, father: Option<Box<SymbolTable>>) -> Self{
+        SymbolTable { dictionary: dictionary, father: father }
+    }
+}
 
 #[derive(Debug)]
 pub struct Program {
     pub statement_list: Vec<Statement>,
+    pub symbol_table: SymbolTable,
 }
 
 impl fmt::Display for Program {
@@ -19,26 +36,41 @@ impl fmt::Display for Program {
 }
 
 impl Program {
-    pub fn new(statement_list: Vec<Statement>) -> Self {
-        Program { statement_list: statement_list }
+    pub fn new(statement_list: Vec<Statement>, symbol_table: SymbolTable ) -> Self {
+        Program { statement_list: statement_list , symbol_table: symbol_table }
     }
 
     pub fn print_expression_tree(&self) {
         for statement in &self.statement_list {
-            use self::Statement::*;
-            match statement {
-                Assign(lvalue, rvalue) => {
-
-                },
-                _ => (),
-            };
+            statement.print_expression_tree();
         }
     }
+
+    pub fn populate_symbol_table(&mut self) {
+        for statement in &mut self.statement_list {
+            statement.populate_symbol_table(&mut self.symbol_table);
+        }
+    }
+
+    pub fn print_symbol_table(&self) {
+        println!("{:#?}", self.symbol_table);
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum Type {
+    Int,
+    Float,
+    String,
+    Array(usize, Box<Type>),
 }
 
 #[derive(Debug)]
 pub enum Statement {
-    Declaration,
+    Declaration {
+        id: String,
+        decl_type: Type,
+    },
     Assign(LValue, RValue),
     Print,
     Read,
@@ -51,16 +83,71 @@ pub enum Statement {
     Error,
 }
 
+impl Statement {
+    pub fn print_expression_tree(&self) {
+        use self::Statement::*;
+
+        match self {
+            Assign(lvalue, rvalue) => {
+                lvalue.print_expression_tree();
+                rvalue.print_expression_tree();
+            }
+            Block(statement_list) => {
+                for statement in statement_list {
+                    statement.print_expression_tree();
+                }
+            }
+            _ => (),
+        }
+    }
+
+    pub fn populate_symbol_table(&mut self, father: &mut SymbolTable) {
+        use self::Statement::*;
+
+        match self {
+            Declaration{id, decl_type} => {
+                father.dictionary.insert(id.clone(), Symbol(decl_type.clone()));
+            },
+            _ => (),
+        }
+    }
+}
+
 #[derive(Debug)]
 pub enum RValue {
     Expr(Expr),
     Alloc,
 }
 
+impl RValue {
+    pub fn print_expression_tree(&self) {
+        use self::RValue::*;
+
+        match self {
+            Expr(e) => e.print_expression_tree(),
+            _ => (),
+        }
+    }
+}
+
 #[derive(Debug)]
 pub enum LValue {
     Id(String),
     Access(Box<LValue>, Box<Expr>),
+}
+
+impl LValue {
+    pub fn print_expression_tree(&self) {
+        use self::LValue::*;
+
+        match self {
+            Access(ref lvalue, ref expr) => {
+                lvalue.print_expression_tree();
+                expr.print_expression_tree();
+            }
+            _ => (),
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -74,6 +161,12 @@ pub enum Expr {
     FloatConstant(f64),
     StringConstant(String),
     NullConstant,
+}
+
+impl Expr {
+    pub fn print_expression_tree(&self) {
+        println!("{:#?}", self);
+    }
 }
 
 #[derive(Debug)]

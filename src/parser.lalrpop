@@ -1,4 +1,10 @@
+use std::convert::TryInto;
+use std::collections::BTreeMap;
+
 use crate::ast::Program;
+use crate::ast::SymbolTable;
+use crate::ast::Symbol;
+use crate::ast::Type;
 use crate::ast::Statement;
 use crate::ast::Expr;
 use crate::ast::OpCode;
@@ -8,12 +14,12 @@ use crate::ast::RValue;
 grammar;
 
 pub Program: Program = {
-    <s: Statement*> =>  Program::new(s),
+    <s: Statement*> =>  Program::new(s, SymbolTable::new(BTreeMap::new(), None)),
 };
 
 Statement: Statement = {
     FunctionDefinition => Statement::Empty,
-    <s: VariableDeclaration> ";" => Statement::Declaration,
+    <s: VariableDeclaration> ";" => s,
     <s: Assignment> ";" => s,
     <s: PrintStatement> ";" => Statement::Print,
     <s: ReadStatement> ";" => Statement::Read,
@@ -25,10 +31,25 @@ Statement: Statement = {
     ";" => Statement::Empty,
 }
 
-Type: () = {
-    "int",
-    "float",
-    "string",
+Type: Type = {
+    "int" => Type::Int,
+    "float" => Type::Float,
+    "string" => Type::String,
+}
+
+VariableDeclaration: Statement = {
+    <decl_type: Type> <id: Identifier> <mut array_size_list: ("[" IntConstant "]")*> => {
+        let mut decl_type = decl_type;
+
+        while let Some((_, size, _)) = array_size_list.pop() {
+            match size {
+                Expr::IntConstant(size) => decl_type = Type::Array(size.try_into().unwrap(), Box::new(decl_type)),
+                _ => (),
+            };
+        }
+
+        Statement::Declaration {id: id, decl_type: decl_type}
+    },
 }
 
 FunctionDefinition: () = {
@@ -41,10 +62,6 @@ FunctionParameter: () = {
 
 StatementBlock: Statement = {
     "{" <statement_list: Statement*> "}" => Statement::Block(statement_list),
-}
-
-VariableDeclaration: () = {
-    Type Identifier ("[" IntConstant "]")*,
 }
 
 Assignment: Statement = {
