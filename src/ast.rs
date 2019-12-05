@@ -14,6 +14,16 @@ impl SymbolTable {
     pub fn new(dictionary: BTreeMap<String, Symbol>, father: Option<Box<SymbolTable>>) -> Self{
         SymbolTable { dictionary: dictionary, father: father }
     }
+
+    pub fn get(&self, id: &String) -> Option<Symbol> {
+        match self.dictionary.get(id) {
+            Some(s) => Some(s.clone()),
+            None => match &self.father {
+                Some(table) => table.get(id),
+                None => None,
+            }
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -60,15 +70,23 @@ impl Program {
         }
     }
 
-    pub fn run_type_checker(&self) {
+    pub fn run_type_checker(&self) -> Result<(), String> {
+        for statement in &self.statement_list {
+            match statement.run_type_checker(&self.symbol_table) {
+                Ok(_) => (),
+                Err(s) => return Err(s),
+            };
+        }
+        Ok(())
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Type {
     Int,
     Float,
     String,
+    Null,
     Array(usize, Box<Type>),
 }
 
@@ -154,6 +172,17 @@ impl Statement {
                     statement.populate_symbol_table(symbol_table);
                 }
             }
+            If { compare: _, true_block, false_block } => {
+                true_block.populate_symbol_table(father);
+
+                match false_block {
+                    Some(block) => block.populate_symbol_table(father),
+                    None => (),
+                }
+            }
+            For { init_assign: _, compare: _, loop_assign: _, block } => {
+                block.populate_symbol_table(father);
+            }
             _ => (),
         }
     }
@@ -169,15 +198,65 @@ impl Statement {
                     statement.print_symbol_table();
                 }
             }
+            If { compare: _, true_block, false_block } => {
+                true_block.print_symbol_table();
+
+                match false_block {
+                    Some(block) => block.print_symbol_table(),
+                    None => (),
+                }
+            }
+            For { init_assign: _, compare: _, loop_assign: _, block } => {
+                block.print_symbol_table();
+            }
             _ => (),
         }
+    }
+
+    pub fn run_type_checker(&self, symbol_table: &SymbolTable) -> Result<(), String> {
+        use self::Statement::*;
+
+        match self {
+            Assign(lvalue, rvalue) => {
+                lvalue.run_type_checker(symbol_table).unwrap();
+                rvalue.run_type_checker(symbol_table).unwrap();
+            }
+            Block(statement_list, table) => {
+                for statement in statement_list {
+                    statement.run_type_checker(table).unwrap();
+                }
+            }
+            Print(expr) => {
+                expr.run_type_checker(symbol_table).unwrap();
+            }
+            Read(lvalue) => {
+                lvalue.run_type_checker(symbol_table).unwrap();
+            }
+            If { compare, true_block, false_block } => {
+                compare.run_type_checker(symbol_table).unwrap();
+                true_block.run_type_checker(symbol_table).unwrap();
+                match false_block {
+                    Some(block) => block.run_type_checker(symbol_table).unwrap(),
+                    None => (),
+                }
+            }
+            For { init_assign, compare, loop_assign, block } => {
+                init_assign.run_type_checker(symbol_table).unwrap();
+                compare.run_type_checker(symbol_table).unwrap();
+                loop_assign.run_type_checker(symbol_table).unwrap();
+                block.run_type_checker(symbol_table).unwrap();
+            }
+            _ => (),
+        };
+
+        Ok(())
     }
 }
 
 #[derive(Debug)]
 pub enum RValue {
     Expr(Expr),
-    Alloc,
+    Alloc(Type),
 }
 
 impl RValue {
@@ -187,6 +266,15 @@ impl RValue {
         match self {
             Expr(e) => e.print_expression_tree(),
             _ => (),
+        }
+    }
+
+    pub fn run_type_checker(&self, symbol_table: &SymbolTable) -> Result<Type, String> {
+        use self::RValue::*;
+
+        match self {
+            Expr(e) => e.run_type_checker(symbol_table),
+            Alloc(t) => Ok(t.clone()),
         }
     }
 }
@@ -209,6 +297,36 @@ impl LValue {
             _ => (),
         }
     }
+
+    pub fn run_type_checker(&self, symbol_table: &SymbolTable) -> Result<Type, String> {
+        use self::LValue::*;
+
+        match self {
+            Access(ref lvalue, ref expr) => {
+                match lvalue.run_type_checker(symbol_table) {
+                    Ok(l_type) => {
+                        match expr.run_type_checker(symbol_table) {
+                            Ok(r_type) => {
+                                if l_type == r_type {
+                                    Ok(l_type)
+                                } else {
+                                    Err(format!("Type missmatch."))
+                                }
+                            }
+                            Err(s) => Err(s),
+                        }
+                    }
+                    Err(s) => Err(s),
+                }
+            }
+            Id(id) => {
+                match symbol_table.get(id) {
+                    Some(symbol) => Ok(symbol.0.clone()),
+                    None => Err(format!("Can not find {} on symble table", id)),
+                }
+            }
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -227,6 +345,40 @@ pub enum Expr {
 impl Expr {
     pub fn print_expression_tree(&self) {
         println!("{:#?}", self);
+    }
+
+    pub fn run_type_checker(&self, symbol_table: &SymbolTable) -> Result<Type, String> {
+        use self::Expr::*;
+
+        match self {
+            BinaryOp(l, _op, r) => {
+                match l.run_type_checker(symbol_table) {
+                    Ok(l_type) => {
+                        match r.run_type_checker(symbol_table) {
+                            Ok(r_type) => {
+                                if l_type == r_type {
+                                    Ok(l_type)
+                                } else {
+                                    Err(format!("Type missmatch"))
+                                }
+                            }
+                            Err(s) => Err(s),
+                        }
+                    }
+                    Err(s) => Err(s),
+                }
+            },
+            UnaryOp(_op, expr) => {
+                expr.run_type_checker(symbol_table)
+            },
+            NamedLeaf(lvalue) => {
+                lvalue.run_type_checker(symbol_table)
+            },
+            IntConstant(_) => Ok(self::Type::Int),
+            FloatConstant(_) => Ok(self::Type::Float),
+            StringConstant(_) => Ok(self::Type::String),
+            NullConstant => Ok(self::Type::Null),
+        }
     }
 }
 

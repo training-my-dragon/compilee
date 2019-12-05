@@ -31,7 +31,11 @@ fn main() {
                 println!("Symbol Tables for each context of {}", arg);
                 program.print_symbol_table();
 
-                program.run_type_checker();
+                println!("Testing if arithmetic expressions have consistant type.");
+                match program.run_type_checker() {
+                    Ok(()) => println!("SUCCESS"),
+                    Err(s) => println!("ERROR: {}", s),
+                }
             },
             Err(error) => println!("Parsing erro: {:#?}", error),
         }

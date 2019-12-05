@@ -81,7 +81,7 @@ LValue: LValue = {
 
 RValue: RValue = {
     NumericalExpression => RValue::Expr(<>),
-    Allocation => RValue::Alloc,
+    Allocation,
 }
 
 CompareOp: OpCode = {
@@ -163,8 +163,8 @@ Factor: Expr = {
     "(" <e: NumericalExpression> ")" => e,
 }
 
-Allocation: () = {
-    "new" Type ("[" NumericalExpression "]")+,
+Allocation: RValue = {
+    "new" <t: Type> ("[" NumericalExpression "]")+ => RValue::Alloc(t),
 }
 
 PrintStatement: Statement = {
