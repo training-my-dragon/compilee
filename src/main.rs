@@ -33,7 +33,7 @@ fn main() {
 
                 println!("Testing if arithmetic expressions have consistant type.");
                 match program.run_type_checker() {
-                    Ok(()) => println!("SUCCESS"),
+                    Ok(()) => println!("SUCCESS: There is no type missmatches and there is no invalid ids."),
                     Err(s) => println!("ERROR: {}", s),
                 }
             },

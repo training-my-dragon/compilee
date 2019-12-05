@@ -90,6 +90,20 @@ pub enum Type {
     Array(usize, Box<Type>),
 }
 
+impl fmt::Display for Type {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use self::Type::*;
+
+        match *self {
+            Int => write!(f, "int"),
+            Float => write!(f, "float"),
+            String => write!(f, "string"),
+            _ => write!(f, "unknown"),
+        }
+    }
+}
+
+
 #[derive(Debug)]
 pub enum Statement {
     Declaration {
@@ -218,33 +232,69 @@ impl Statement {
 
         match self {
             Assign(lvalue, rvalue) => {
-                lvalue.run_type_checker(symbol_table).unwrap();
-                rvalue.run_type_checker(symbol_table).unwrap();
+                match lvalue.run_type_checker(symbol_table) {
+                    Ok(_) => (),
+                    Err(s) => return Err(s),
+                }
+                match rvalue.run_type_checker(symbol_table) {
+                    Ok(_) => (),
+                    Err(s) => return Err(s),
+                }
             }
             Block(statement_list, table) => {
                 for statement in statement_list {
-                    statement.run_type_checker(table).unwrap();
+                    match statement.run_type_checker(table) {
+                        Ok(_) => (),
+                        Err(s) => return Err(s),
+                    }
                 }
             }
             Print(expr) => {
-                expr.run_type_checker(symbol_table).unwrap();
+                match expr.run_type_checker(symbol_table) {
+                    Ok(_) => (),
+                    Err(s) => return Err(s),
+                }
             }
             Read(lvalue) => {
-                lvalue.run_type_checker(symbol_table).unwrap();
+                match lvalue.run_type_checker(symbol_table) {
+                    Ok(_) => (),
+                    Err(s) => return Err(s),
+                }
             }
             If { compare, true_block, false_block } => {
-                compare.run_type_checker(symbol_table).unwrap();
-                true_block.run_type_checker(symbol_table).unwrap();
+                match compare.run_type_checker(symbol_table) {
+                    Ok(_) => (),
+                    Err(s) => return Err(s),
+                }
+                match true_block.run_type_checker(symbol_table) {
+                    Ok(_) => (),
+                    Err(s) => return Err(s),
+                }
                 match false_block {
-                    Some(block) => block.run_type_checker(symbol_table).unwrap(),
+                    Some(block) => match block.run_type_checker(symbol_table) {
+                        Ok(_) => (),
+                        Err(s) => return Err(s),
+                    },
                     None => (),
                 }
             }
             For { init_assign, compare, loop_assign, block } => {
-                init_assign.run_type_checker(symbol_table).unwrap();
-                compare.run_type_checker(symbol_table).unwrap();
-                loop_assign.run_type_checker(symbol_table).unwrap();
-                block.run_type_checker(symbol_table).unwrap();
+                match init_assign.run_type_checker(symbol_table) {
+                    Ok(_) => (),
+                    Err(s) => return Err(s),
+                }
+                match compare.run_type_checker(symbol_table) {
+                    Ok(_) => (),
+                    Err(s) => return Err(s),
+                }
+                match loop_assign.run_type_checker(symbol_table) {
+                    Ok(_) => (),
+                    Err(s) => return Err(s),
+                }
+                match block.run_type_checker(symbol_table) {
+                    Ok(_) => (),
+                    Err(s) => return Err(s),
+                }
             }
             _ => (),
         };
@@ -310,7 +360,7 @@ impl LValue {
                                 if l_type == r_type {
                                     Ok(l_type)
                                 } else {
-                                    Err(format!("Type missmatch."))
+                                    Err(format!("Type missmatch between {} and {}.", l_type, r_type))
                                 }
                             }
                             Err(s) => Err(s),
@@ -359,7 +409,7 @@ impl Expr {
                                 if l_type == r_type {
                                     Ok(l_type)
                                 } else {
-                                    Err(format!("Type missmatch"))
+                                    Err(format!("Type missmatch between {} and {}", l_type, r_type))
                                 }
                             }
                             Err(s) => Err(s),
