@@ -30,9 +30,10 @@ fn main() {
 
                 println!("Symbol Tables for each context of {}", arg);
                 program.print_symbol_table();
+
+                program.run_type_checker();
             },
             Err(error) => println!("Parsing erro: {:#?}", error),
         }
-
     }
 }

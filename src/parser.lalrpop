@@ -3,7 +3,6 @@ use std::collections::BTreeMap;
 
 use crate::ast::Program;
 use crate::ast::SymbolTable;
-use crate::ast::Symbol;
 use crate::ast::Type;
 use crate::ast::Statement;
 use crate::ast::Expr;
@@ -21,11 +20,11 @@ Statement: Statement = {
     FunctionDefinition => Statement::Empty,
     <s: VariableDeclaration> ";" => s,
     <s: Assignment> ";" => s,
-    <s: PrintStatement> ";" => Statement::Print,
-    <s: ReadStatement> ";" => Statement::Read,
+    <s: PrintStatement> ";" => s,
+    <s: ReadStatement> ";" => s,
     <s: ReturnStatement> ";" => s,
-    IfStatement => Statement::If,
-    ForStatement => Statement::For,
+    IfStatement,
+    ForStatement,
     StatementBlock,
     "break" ";" => Statement::Break,
     ";" => Statement::Empty,
@@ -168,26 +167,51 @@ Allocation: () = {
     "new" Type ("[" NumericalExpression "]")+,
 }
 
-PrintStatement: () = {
-    "print" NumericalExpression,
+PrintStatement: Statement = {
+    "print" <expr: NumericalExpression> => Statement::Print(expr),
 }
 
-ReadStatement: () = {
-    "read" LValue,
+ReadStatement: Statement = {
+    "read" <lvalue: LValue> => Statement::Read(lvalue),
 }
 
 ReturnStatement: Statement = {
     "return" => Statement::Return,
 }
 
-IfStatement: () = {
-    "if" "(" BoolExpression ")" StatementBlock,
-    "if" "(" BoolExpression ")" StatementBlock "else" IfStatement,
-    "if" "(" BoolExpression ")" StatementBlock "else" StatementBlock,
+IfStatement: Statement = {
+    "if" "(" <compare: BoolExpression> ")" <true_block: StatementBlock> => {
+        Statement::If {
+            compare: compare,
+            true_block: Box::new(true_block),
+            false_block: None
+        }
+    },
+    "if" "(" <compare: BoolExpression> ")" <true_block: StatementBlock> "else" <false_block: IfStatement> => {
+        Statement::If {
+            compare: compare,
+            true_block: Box::new(true_block),
+            false_block: Some(Box::new(false_block)),
+        }
+    },
+    "if" "(" <compare: BoolExpression> ")" <true_block: StatementBlock> "else" <false_block: StatementBlock> => {
+        Statement::If {
+            compare: compare,
+            true_block: Box::new(true_block),
+            false_block: Some(Box::new(false_block)),
+        }
+    },
 }
 
-ForStatement: () = {
-    "for" "(" Assignment ";" BoolExpression ";" Assignment ")" StatementBlock,
+ForStatement: Statement = {
+    "for" "(" <init_assign: Assignment> ";" <compare: BoolExpression> ";" <loop_assign: Assignment> ")" <block: StatementBlock> => {
+        Statement::For {
+            init_assign: Box::new(init_assign),
+            compare: compare,
+            loop_assign: Box::new(loop_assign),
+            block: Box::new(block),
+        }
+    },
 }
 
 Identifier: String = {

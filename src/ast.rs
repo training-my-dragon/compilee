@@ -59,6 +59,9 @@ impl Program {
             statement.print_symbol_table();
         }
     }
+
+    pub fn run_type_checker(&self) {
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -75,16 +78,28 @@ pub enum Statement {
         id: String,
         decl_type: Type,
     },
+    FunctionDefinition,
+
     Assign(LValue, RValue),
-    Print,
-    Read,
-    Return,
-    If,
-    For,
+
+    Print(Expr),
+    Read(LValue),
+
+    If {
+        compare: Expr,
+        true_block: Box<Statement>,
+        false_block: Option<Box<Statement>>,
+    },
+    For {
+        init_assign: Box<Statement>,
+        compare: Expr,
+        loop_assign: Box<Statement>,
+        block: Box<Statement>,
+    },
     Block(Vec<Statement>, SymbolTable),
+    Return,
     Break,
     Empty,
-    Error,
 }
 
 impl Statement {
@@ -100,6 +115,26 @@ impl Statement {
                 for statement in statement_list {
                     statement.print_expression_tree();
                 }
+            }
+            Print(expr) => {
+                expr.print_expression_tree();
+            }
+            Read(lvalue) => {
+                lvalue.print_expression_tree();
+            }
+            If { compare, true_block, false_block } => {
+                compare.print_expression_tree();
+                true_block.print_expression_tree();
+                match false_block {
+                    Some(block) => block.print_expression_tree(),
+                    None => (),
+                }
+            }
+            For { init_assign, compare, loop_assign, block } => {
+                init_assign.print_expression_tree();
+                compare.print_expression_tree();
+                loop_assign.print_expression_tree();
+                block.print_expression_tree();
             }
             _ => (),
         }
