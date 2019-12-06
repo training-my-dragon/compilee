@@ -17,7 +17,7 @@ pub Program: Program = {
 };
 
 Statement: Statement = {
-    FunctionDefinition => Statement::Empty,
+    FunctionDefinition,
     <s: VariableDeclaration> ";" => s,
     <s: Assignment> ";" => s,
     <s: PrintStatement> ";" => s,
@@ -51,11 +51,23 @@ VariableDeclaration: Statement = {
     },
 }
 
-FunctionDefinition: () = {
-    "def" Identifier "(" (FunctionParameter ",")* ")" StatementBlock,
+FunctionDefinition: Statement = {
+    "def" <id: Identifier> "(" <parameter_list: (FunctionParameter ",")*> ")" <body: StatementBlock> => {
+        let mut list = vec![];
+
+        for (parameter, _) in parameter_list {
+            list.push(parameter);
+        }
+
+        Statement::FunctionDefinition{
+            id: id,
+            parameter_list: list,
+            body: Box::new(body),
+        }
+    },
 }
 
-FunctionParameter: () = {
+FunctionParameter: (Type, String) = {
     Type Identifier,
 }
 

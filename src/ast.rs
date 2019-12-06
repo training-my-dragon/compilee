@@ -63,6 +63,7 @@ impl Program {
     }
 
     pub fn print_symbol_table(&self) {
+        println!("Symbol Table of root block:");
         println!("{:#?}", self.symbol_table);
 
         for statement in &self.statement_list {
@@ -98,16 +99,36 @@ pub enum Type {
     String,
     Null,
     Array(usize, Box<Type>),
+    Function,
+}
+
+impl Type {
+    pub fn get_nested_type(&self) -> Self {
+        use self::Type::*;
+
+        match self {
+            Int => Int,
+            Float => Float,
+            String => String,
+            Null => Null,
+            Function => Function,
+            Array(_, nested_type) => nested_type.get_nested_type(),
+        }
+    }
 }
 
 impl fmt::Display for Type {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use self::Type::*;
 
-        match *self {
+        match self {
             Int => write!(f, "int"),
             Float => write!(f, "float"),
             String => write!(f, "string"),
+            Function => write!(f, "function"),
+            Array(size, nested_type) => {
+                write!(f, "array({}, {})", size, nested_type)
+            }
             _ => write!(f, "unknown"),
         }
     }
@@ -120,7 +141,11 @@ pub enum Statement {
         id: String,
         decl_type: Type,
     },
-    FunctionDefinition,
+    FunctionDefinition{
+        id: String,
+        parameter_list: Vec<(Type, String)>,
+        body: Box<Statement>,
+    },
 
     Assign(LValue, RValue),
 
@@ -178,6 +203,9 @@ impl Statement {
                 loop_assign.print_expression_tree();
                 block.print_expression_tree();
             }
+            FunctionDefinition { id: _, parameter_list: _, body} => {
+                body.print_expression_tree();
+            }
             _ => (),
         }
     }
@@ -207,6 +235,10 @@ impl Statement {
             For { init_assign: _, compare: _, loop_assign: _, block } => {
                 block.populate_symbol_table(father);
             }
+            FunctionDefinition { id, parameter_list: _, body} => {
+                father.dictionary.insert(id.clone(), Symbol(Type::Function));
+                body.populate_symbol_table(father);
+            }
             _ => (),
         }
     }
@@ -216,6 +248,7 @@ impl Statement {
 
         match self {
             Block(statement_list, symbol_table) => {
+                println!("Symbol Table of nameless block:");
                 println!("{:#?}", symbol_table);
 
                 for statement in statement_list {
@@ -223,15 +256,24 @@ impl Statement {
                 }
             }
             If { compare: _, true_block, false_block } => {
+                println!("Symbol Table of if true block:");
                 true_block.print_symbol_table();
 
                 match false_block {
-                    Some(block) => block.print_symbol_table(),
+                    Some(block) => {
+                        println!("Symbol Table of if false block:");
+                        block.print_symbol_table()
+                    }
                     None => (),
                 }
             }
             For { init_assign: _, compare: _, loop_assign: _, block } => {
+                println!("Symbol Table of for loop:");
                 block.print_symbol_table();
+            }
+            FunctionDefinition { id, parameter_list: _, body} => {
+                println!("Symbol Table of function {}:", id);
+                body.print_symbol_table();
             }
             _ => (),
         }
@@ -324,7 +366,7 @@ impl Statement {
                     }
                 }
             },
-            For { init_assign, compare, loop_assign, block } => {
+            For { init_assign: _, compare: _, loop_assign: _, block } => {
                 return block.check_break_inside_for(true);
             }
             If { compare: _, true_block, false_block } => {
@@ -421,7 +463,7 @@ impl LValue {
             }
             Id(id) => {
                 match symbol_table.get(id) {
-                    Some(symbol) => Ok(symbol.0.clone()),
+                    Some(symbol) => Ok(symbol.0.get_nested_type()),
                     None => Err(format!("Can not find {} on symble table", id)),
                 }
             }
