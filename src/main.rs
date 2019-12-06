@@ -36,6 +36,12 @@ fn main() {
                     Ok(()) => println!("SUCCESS: There is no type missmatches and there is no invalid ids."),
                     Err(s) => println!("ERROR: {}", s),
                 }
+
+                println!("Testing if all breaks are inside for loops.");
+                match program.check_break_inside_for() {
+                    Ok(()) => println!("SUCCESS: There is no breaks inside for loops."),
+                    Err(s) => println!("ERROR: {}", s),
+                }
             },
             Err(error) => println!("Parsing erro: {:#?}", error),
         }

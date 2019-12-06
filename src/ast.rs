@@ -79,6 +79,16 @@ impl Program {
         }
         Ok(())
     }
+
+    pub fn check_break_inside_for(&self) -> Result<(), String> {
+        for statement in &self.statement_list {
+            match statement.check_break_inside_for(false) {
+                Ok(_) => (),
+                Err(s) => return Err(s),
+            }
+        }
+        Ok(())
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -295,6 +305,46 @@ impl Statement {
                     Ok(_) => (),
                     Err(s) => return Err(s),
                 }
+            }
+            _ => (),
+        };
+
+        Ok(())
+    }
+
+    pub fn check_break_inside_for(&self, can_break: bool) -> Result<(), String> {
+        use self::Statement::*;
+
+        match self {
+            Block(statement_list, _) => {
+                for statement in statement_list {
+                    match statement.check_break_inside_for(can_break) {
+                        Ok(_) => (),
+                        Err(s) => return Err(s),
+                    }
+                }
+            },
+            For { init_assign, compare, loop_assign, block } => {
+                return block.check_break_inside_for(true);
+            }
+            If { compare: _, true_block, false_block } => {
+                match true_block.check_break_inside_for(can_break) {
+                    Ok(_) => (),
+                    Err(s) => return Err(s),
+                }
+
+                match false_block {
+                    Some(block) => match block.check_break_inside_for(can_break) {
+                        Ok(_) => (),
+                        Err(s) => return Err(s),
+                    }
+                    None => (),
+                }
+            }
+            Break => if can_break {
+                return Ok(());
+            } else {
+                return Err(format!("break statement outside for loop"));
             }
             _ => (),
         };
